@@ -18,7 +18,7 @@
 
 mod combinations;
 
-pub use crate::combinations::Combinations;
+use crate::combinations::Combinations;
 use std::{env, fs::File, io::BufRead, io::BufReader};
 
 fn main() {
@@ -40,20 +40,16 @@ fn main() {
         .map(|s| s.parse::<u32>().expect("entry was not an int"))
         .collect::<Vec<u32>>();
 
-    let initial_entries_count = entries.len();
+    display_initial_entries_message(&entries, group_size);
 
+    let initial_entries_count = entries.len();
     entries.sort();
     remove_impossible_entries(&mut entries, group_size);
 
-    println!();
-    println!("Found {} entries", initial_entries_count);
-    println!(
-        "Eliminated {} entries that could not be part of the solution",
-        initial_entries_count - entries.len()
-    );
-
-    let combinations = Combinations::new(entries, group_size);
+    let combinations = Combinations::new(&entries, group_size);
     let mut iterations = 0;
+
+    display_filtered_entries_mesage(initial_entries_count, &entries, &combinations);
 
     for combination in combinations {
         iterations += 1;
@@ -66,11 +62,39 @@ fn main() {
     display_failure_message(group_size, iterations);
 }
 
+fn display_initial_entries_message(entries: &Vec<u32>, group_size: usize) {
+    let num_entries = entries.len();
+    println!();
+    println!("Found {} entries", num_entries);
+    println!(
+        "{} entries would have {} possible combinations of {}",
+        num_entries,
+        Combinations::new(&entries, group_size).len(),
+        group_size
+    );
+}
+
 fn remove_impossible_entries(entries: &mut Vec<u32>, group_size: usize) {
     let smallest_entries = entries[0..(group_size - 1)].to_vec();
     let sum_of_smallest = smallest_entries.iter().sum::<u32>();
 
     entries.retain(|&entry| entry + sum_of_smallest <= 2020)
+}
+
+fn display_filtered_entries_mesage(
+    initial_entries_count: usize,
+    entries: &Vec<u32>,
+    combinations: &Combinations,
+) {
+    println!();
+    println!(
+        "Eliminated {} entries that could not be part of the solution",
+        initial_entries_count - entries.len()
+    );
+    println!(
+        "Now we have {} possible combinations to consider",
+        combinations.len()
+    );
 }
 
 fn display_success_message(combination: Vec<u32>, iterations: usize) {
