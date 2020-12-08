@@ -29,6 +29,12 @@ impl PasswordEntry {
         let character_count = self.password.matches(self.letter).count() as u8;
         return character_count >= self.min && character_count <= self.max;
     }
+
+    pub fn valid_v2(&self) -> bool {
+        let first = self.password.chars().nth(self.min as usize - 1).unwrap();
+        let second = self.password.chars().nth(self.max as usize - 1).unwrap();
+        return (first == self.letter) ^ (second == self.letter);
+    }
 }
 
 #[cfg(test)]
@@ -54,5 +60,16 @@ mod tests {
         assert_eq!(too_few.valid(), false);
         assert_eq!(too_many.valid(), false);
         assert_eq!(just_right.valid(), true);
+    }
+
+    #[test]
+    fn test_valid_v2() {
+        let just_right = PasswordEntry::from_string("1-3 a: abcde".to_string());
+        let both = PasswordEntry::from_string("1-3 b: cdefg".to_string());
+        let neither = PasswordEntry::from_string("2-9 c: ccccccccc".to_string());
+
+        assert_eq!(just_right.valid_v2(), true);
+        assert_eq!(both.valid_v2(), false);
+        assert_eq!(neither.valid_v2(), false);
     }
 }
