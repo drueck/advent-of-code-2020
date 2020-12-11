@@ -6,18 +6,27 @@
 // For part 1, as long as all the required fields are present, the passport is
 // considered valid. The goal is to print out the number of valid passports.
 //
-// byr (Birth Year)
-// iyr (Issue Year)
-// eyr (Expiration Year)
-// hgt (Height)
-// hcl (Hair Color)
-// ecl (Eye Color)
-// pid (Passport ID)
-// cid (Country ID)
+// Part 2 Update: Validating field values
+//
+// Each field must validate according to these rules:
+//
+// byr (Birth Year) - four digits; at least 1920 and at most 2020
+// iyr (Issue Year) - four digits; at least 2010 and at most 2020
+// eyr (Expiration Year) - four digits; at least 2020 and at most 2030
+// hgt (Height) - a number followed by either cm or in
+//  - if cm, the number must be at least 150 and at most 293
+//  - if in, the number must be at least 59 and at most 76
+// hcl (Hair Color) - a # followed by exactly six characters 0-9 or a-f
+// ecl (Eye Color) - exactly one of amb blu brn gry grn hzl oth
+// pid (Passport ID) - a nine-digit number, including leading zeros
+// cid (Country ID) - optional, so no validation
 //
 // Usage: cargo run <input-file>
 
 use std::{collections::HashMap, env, fs::File, io::BufRead, io::BufReader};
+
+mod passport;
+use crate::passport::Passport;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -36,32 +45,30 @@ fn main() {
         .map(|l| l.expect("could not parse line"))
         .collect();
 
-    let required_keys = vec!["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"];
-
-    let mut passports: Vec<HashMap<String, String>> = vec![];
-    let mut passport: HashMap<String, String> = HashMap::new();
+    let mut passports: Vec<Passport> = vec![];
+    let mut fields: HashMap<String, String> = HashMap::new();
 
     for line in lines {
         if line.trim() == "" {
-            passports.push(passport);
-            passport = HashMap::new();
+            passports.push(Passport::new(&fields));
+            fields = HashMap::new();
             continue;
         }
 
-        let fields: Vec<&str> = line.split(" ").collect();
-        for field in fields {
-            let parts: Vec<&str> = field.split(":").collect();
-            passport.insert(parts[0].to_string(), parts[1].to_string());
+        let entries: Vec<&str> = line.split(" ").collect();
+        for entry in entries {
+            let parts: Vec<&str> = entry.split(":").collect();
+            fields.insert(parts[0].to_string(), parts[1].to_string());
         }
     }
 
-    passports.push(passport);
+    passports.push(Passport::new(&fields));
 
     let total_passports = passports.len();
 
     let valid_passports = passports
         .iter()
-        .filter(|&passport| required_keys.iter().all(|&key| passport.contains_key(key)))
+        .filter(|&passport| passport.valid())
         .count();
 
     println!(
