@@ -32,8 +32,6 @@ pub fn seat_id(seat_code: &str) -> usize {
 fn find_index(code: &str, scheme: &SeatScheme) -> usize {
     let mut min = scheme.min;
     let mut max = scheme.max;
-    let lower_half_char = scheme.lower_half_char;
-    let upper_half_char = scheme.upper_half_char;
 
     for letter in code.chars() {
         if min == max {
@@ -41,9 +39,9 @@ fn find_index(code: &str, scheme: &SeatScheme) -> usize {
         }
 
         let offset = (max - min + 1) / 2;
-        if letter == lower_half_char {
+        if letter == scheme.lower_half_char {
             max -= offset;
-        } else if letter == upper_half_char {
+        } else if letter == scheme.upper_half_char {
             min += offset;
         }
     }
