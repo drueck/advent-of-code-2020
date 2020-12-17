@@ -8,6 +8,10 @@
 // yes. So, for the example in test-input.txt the answer should be
 // 3 + 3 + 3 + 1 + 1 = 11.
 //
+// Day 2 update: different rules. We only want the list of questions that all
+// members of the group answered yes to. So for the test input example, instead
+// of 11 we would get: 3 + 0 + 1 + 1 + 1 = 6.
+//
 // Usage: cargo run <input-file>
 
 use std::{collections::HashSet, env, fs::File, io::BufRead, io::BufReader};
@@ -29,25 +33,50 @@ fn main() {
         .map(|l| l.expect("could not parse line"))
         .collect();
 
-    let mut questions_answered_yes: HashSet<char> = HashSet::new();
-    let mut groups_yes_answers: Vec<HashSet<char>> = vec![];
+    let groups_lines = split_into_groups(lines);
+    let groups_common_questions = find_common_questions(groups_lines);
 
-    for line in lines {
-        if line.trim() == "" {
-            groups_yes_answers.push(questions_answered_yes);
-            questions_answered_yes = HashSet::new();
-        } else {
-            for question_letter in line.chars() {
-                questions_answered_yes.insert(question_letter);
-            }
-        }
-    }
-    groups_yes_answers.push(questions_answered_yes);
-
-    let answer: usize = groups_yes_answers.iter().map(|group| group.len()).sum();
+    let answer: usize = groups_common_questions
+        .iter()
+        .map(|common_questions| common_questions.len())
+        .sum();
 
     println!(
         "The sum of counts of yes answers for each group is {}",
         answer
     );
+}
+
+fn split_into_groups(lines: Vec<String>) -> Vec<Vec<String>> {
+    let mut groups_lines: Vec<Vec<String>> = vec![];
+    let mut group_lines: Vec<String> = vec![];
+
+    for line in lines.iter() {
+        if line.trim() == "" {
+            group_lines.sort_unstable_by_key(|line| line.len());
+            groups_lines.push(group_lines);
+            group_lines = vec![];
+        } else {
+            group_lines.push(line.clone());
+        }
+    }
+    group_lines.sort_unstable_by_key(|line| line.len());
+    groups_lines.push(group_lines);
+
+    return groups_lines;
+}
+
+fn find_common_questions(groups_lines: Vec<Vec<String>>) -> Vec<HashSet<char>> {
+    return groups_lines
+        .iter()
+        .map(|group_lines| {
+            let mut common_questions: HashSet<char> = group_lines[0].chars().collect();
+            let num_lines = group_lines.len();
+            for i in 1..num_lines {
+                let line_questions: HashSet<char> = group_lines[i].chars().collect();
+                common_questions.retain(|question| line_questions.contains(&question));
+            }
+            return common_questions;
+        })
+        .collect();
 }
