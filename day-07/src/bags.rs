@@ -64,16 +64,15 @@ impl BagRules {
         self.contained_by.insert(container_bag, contents);
     }
 
-    // may need for part 2
-    // fn bags_directly_contained_by(&mut self, bag: &Bag) -> Option<&HashMap<Bag, usize>> {
-    //     return self.contained_by.get(bag);
-    // }
+    fn bags_directly_contained_by(&self, bag: &Bag) -> Option<&HashMap<Bag, usize>> {
+        return self.contained_by.get(bag);
+    }
 
-    fn bags_that_directly_contain(&mut self, bag: &Bag) -> Option<&HashSet<Bag>> {
+    fn bags_that_directly_contain(&self, bag: &Bag) -> Option<&HashSet<Bag>> {
         return self.contains.get(bag);
     }
 
-    pub fn bags_that_could_contain(&mut self, bag: &Bag) -> HashSet<Bag> {
+    pub fn bags_that_could_contain(&self, bag: &Bag) -> HashSet<Bag> {
         let mut containers: HashSet<Bag> = HashSet::new();
         let mut bags_to_check: VecDeque<Bag> = VecDeque::new();
 
@@ -89,6 +88,19 @@ impl BagRules {
         }
 
         return containers;
+    }
+
+    // this is recursive, and we're just hoping that the problem is such that we
+    // won't blow up the stack because we have a resonably small depth
+    pub fn num_bags_inside(&self, bag: &Bag) -> usize {
+        let bags_directly_inside = self.bags_directly_contained_by(bag);
+        return match bags_directly_inside {
+            None => 0,
+            Some(bags_directly_inside) => bags_directly_inside
+                .iter()
+                .map(|(bag, count)| count + count * self.num_bags_inside(bag))
+                .sum(),
+        };
     }
 }
 
@@ -219,5 +231,37 @@ mod tests {
                 true
             );
         }
+    }
+
+    #[test]
+    fn num_bags_inside() {
+        let mut bag_rules = BagRules::new();
+        let lines = get_test_lines();
+
+        for line in lines {
+            bag_rules.add_rule(line);
+        }
+
+        let shiny_gold_bag = Bag::new("shiny gold");
+
+        assert_eq!(bag_rules.num_bags_inside(&shiny_gold_bag), 32);
+    }
+
+    fn get_test_lines() -> Vec<&'static str> {
+        return r#"
+            light red bags contain 1 bright white bag, 2 muted yellow bags.
+            dark orange bags contain 3 bright white bags, 4 muted yellow bags.
+            bright white bags contain 1 shiny gold bag.
+            muted yellow bags contain 2 shiny gold bags, 9 faded blue bags.
+            shiny gold bags contain 1 dark olive bag, 2 vibrant plum bags.
+            dark olive bags contain 3 faded blue bags, 4 dotted black bags.
+            vibrant plum bags contain 5 faded blue bags, 6 dotted black bags.
+            faded blue bags contain no other bags.
+            dotted black bags contain no other bags.
+        "#
+        .trim()
+        .split("\n")
+        .map(|line| line.trim())
+        .collect();
     }
 }

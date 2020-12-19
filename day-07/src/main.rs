@@ -9,6 +9,11 @@
 // directly or nested in a bright white, muted yellow, dark orange, or
 // light red bag.
 //
+// Part 2:
+//
+// For part two we are curious how many bags would have to be inside our
+// shiny gold bag. Sooooo many.
+//
 // Usage cargo run <input-file>
 
 use std::{env, fs::File, io::BufRead, io::BufReader};
@@ -40,10 +45,16 @@ fn main() {
     }
 
     let shiny_gold_bag = Bag::new("shiny gold");
-    let answer = bag_rules.bags_that_could_contain(&shiny_gold_bag).len();
+    let bags_containing_shiny_gold = bag_rules.bags_that_could_contain(&shiny_gold_bag).len();
+    let bags_inside_shiny_gold = bag_rules.num_bags_inside(&shiny_gold_bag);
 
     println!(
         "The number of bags that could contain a shiny gold bag is: {}",
-        answer
+        bags_containing_shiny_gold
+    );
+
+    println!(
+        "The number of bags inside a shiny gold bag is: {}",
+        bags_inside_shiny_gold
     );
 }
