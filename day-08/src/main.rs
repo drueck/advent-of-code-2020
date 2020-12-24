@@ -9,7 +9,10 @@
 //
 // Usage: cargo run <input-file>
 
-use std::{collections::HashMap, env, fs::File, io::BufRead, io::BufReader};
+use std::{env, fs::File, io::BufRead, io::BufReader};
+
+mod vm;
+use crate::vm::{execute, parse, Instruction};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -23,48 +26,13 @@ fn main() {
 
     let file = File::open(input_file).expect("no such file");
     let buf = BufReader::new(file);
-    let instructions: Vec<String> = buf
+    let original_instructions: Vec<Instruction> = buf
         .lines()
         .map(|l| l.expect("could not parse line"))
+        .map(|s| parse(&s))
         .collect();
 
-    let mut ip: usize = 0;
-    let mut acc: isize = 0;
-    let mut visited_instructions: HashMap<usize, bool> = HashMap::new();
-    let instructions_len: usize = instructions.len();
+    let acc = execute(original_instructions);
 
-    while ip <= instructions_len && !visited_instructions.contains_key(&ip) {
-        visited_instructions.insert(ip, true);
-        let (opcode, arg) = parse(&instructions[ip]);
-
-        match &opcode[..] {
-            "nop" => {
-                ip = ip + 1;
-            }
-            "acc" => {
-                acc = acc + arg;
-                ip = ip + 1;
-            }
-            "jmp" => {
-                if arg < 0 {
-                    ip = ip - arg.abs() as usize;
-                } else {
-                    ip = ip + arg as usize;
-                }
-            }
-            _ => {
-                panic!("Incompatible opcode found!");
-            }
-        }
-    }
-
-    println!("The value of the accumulator was {}", acc);
-}
-
-fn parse(instruction: &str) -> (String, isize) {
-    let parts: Vec<&str> = instruction.split(" ").collect();
-    let opcode: String = parts[0].to_string();
-    let arg: isize = parts[1].parse().unwrap();
-
-    return (opcode, arg);
+    println!("The acc just before the infinite loop was {}", acc);
 }
