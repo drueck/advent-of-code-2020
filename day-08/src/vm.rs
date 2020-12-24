@@ -1,23 +1,31 @@
 use std::collections::HashMap;
 
+#[derive(PartialEq, Clone)]
 pub enum OpCode {
     Nop,
     Jmp,
     Acc,
 }
 
+#[derive(Clone)]
 pub struct Instruction {
-    opcode: OpCode,
-    arg: isize,
+    pub opcode: OpCode,
+    pub arg: isize,
 }
 
-pub fn execute(instructions: Vec<Instruction>) -> isize {
+#[derive(PartialEq)]
+pub enum ExitCode {
+    Ok,
+    InfiniteLoop,
+}
+
+pub fn execute(instructions: &Vec<Instruction>) -> (ExitCode, isize) {
     let mut ip: usize = 0;
     let mut acc: isize = 0;
     let mut visited_instructions: HashMap<usize, bool> = HashMap::new();
     let instructions_len: usize = instructions.len();
 
-    while ip <= instructions_len && !visited_instructions.contains_key(&ip) {
+    while ip < instructions_len && !visited_instructions.contains_key(&ip) {
         visited_instructions.insert(ip, true);
         let instruction = &instructions[ip];
 
@@ -39,7 +47,13 @@ pub fn execute(instructions: Vec<Instruction>) -> isize {
         }
     }
 
-    return acc;
+    let exit_code = if ip >= instructions_len {
+        ExitCode::Ok
+    } else {
+        ExitCode::InfiniteLoop
+    };
+
+    return (exit_code, acc);
 }
 
 pub fn parse(instruction: &str) -> Instruction {

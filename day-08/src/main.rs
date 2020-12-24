@@ -7,12 +7,19 @@
 //
 // For the test input the value of the accumulator is 5.
 //
+// Part 2 update:
+//
+// There's a bug in the code that is causing the infinite loop, and we know what it's
+// either a jmp that should be a nop or a nop that should be a jmp. Our task is to
+// find and fix the bug and then see what the acc value is at the end of the proper
+// execution of the program.
+//
 // Usage: cargo run <input-file>
 
 use std::{env, fs::File, io::BufRead, io::BufReader};
 
 mod vm;
-use crate::vm::{execute, parse, Instruction};
+use crate::vm::{execute, parse, ExitCode, Instruction, OpCode};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -32,7 +39,47 @@ fn main() {
         .map(|s| parse(&s))
         .collect();
 
-    let acc = execute(original_instructions);
+    let (_, acc) = execute(&original_instructions);
 
     println!("The acc just before the infinite loop was {}", acc);
+
+    let instructions_len = original_instructions.len();
+    let indices_to_check: Vec<usize> = (0..instructions_len)
+        .filter(|&i| {
+            let instruction = &original_instructions[i];
+            return (instruction.opcode == OpCode::Nop && instruction.arg != 0)
+                || instruction.opcode == OpCode::Jmp;
+        })
+        .collect();
+
+    let mut debug_instructions = original_instructions.clone();
+    let mut result: (ExitCode, isize) = (ExitCode::InfiniteLoop, 0);
+
+    for i in indices_to_check.iter() {
+        let original_instruction = &original_instructions[*i];
+        let test_instruction = Instruction {
+            opcode: if original_instruction.opcode == OpCode::Nop {
+                OpCode::Jmp
+            } else {
+                OpCode::Nop
+            },
+            arg: original_instruction.arg,
+        };
+        debug_instructions[*i] = test_instruction;
+
+        result = execute(&debug_instructions);
+
+        if result.0 == ExitCode::Ok {
+            println!("The buggy instruction was found at index {}", i);
+            break;
+        }
+
+        debug_instructions[*i] = original_instructions[*i].clone();
+    }
+
+    if result.0 == ExitCode::Ok {
+        println!("The correct acc after fixing the bug was {}", result.1);
+    } else {
+        println!("Could not find the bug! :(");
+    }
 }
