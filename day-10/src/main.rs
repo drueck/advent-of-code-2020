@@ -40,8 +40,6 @@ fn main() {
     for i in 0..(lines.len() - 1) {
         let diff = lines[i + 1] - lines[i];
         *differences.entry(diff).or_insert(0) += 1;
-        let counter = differences.get(&diff).unwrap();
-        println!("diffs[{}] = {}", diff, counter);
     }
 
     // adding one for the outlet to the first adapter
