@@ -9,6 +9,13 @@
 // of two of the numbers in the previous group of 5. For the test input
 // the answer is 127.
 //
+// Part 2:
+//
+// We now want to find a group of consecutive number entries in the list
+// which add up to our number that we found in part 1. Then we want to
+// get the minimum and maximum numbers from that group and add them
+// together for our answer. For the test input the answer is 62.
+//
 // Usage cargo run <input-file> <preamble-length>
 
 use std::{env, fs::File, io::BufRead, io::BufReader};
@@ -34,7 +41,7 @@ fn main() {
         .map(|s| s.parse().expect("must be a positive integer"))
         .collect();
 
-    let mut n: &usize;
+    let mut n: &usize = &0;
 
     for i in preamble_length..lines.len() {
         let window = &lines[(i - preamble_length)..i];
@@ -42,11 +49,31 @@ fn main() {
 
         if !sum_of_two_in_window(n, window) {
             println!("The number that doesn't follow the pattern is {}", n);
-            return;
+            break;
         }
     }
 
-    println!("Could not find a number that didn't follow the pattern");
+    let mut start: usize = 0;
+    let mut end: usize = 0;
+
+    for i in 0..lines.len() {
+        let mut sum: usize = lines[i];
+        for j in (i + 1)..lines.len() {
+            sum += lines[j];
+            if sum >= *n {
+                start = i;
+                end = j;
+                break;
+            }
+        }
+        if sum == *n {
+            let range = &lines[start..=end];
+            let min = range.iter().min().unwrap();
+            let max = range.iter().max().unwrap();
+            println!("The answer for part 2 is {}", min + max);
+            break;
+        }
+    }
 }
 
 fn sum_of_two_in_window(n: &usize, window: &[usize]) -> bool {
